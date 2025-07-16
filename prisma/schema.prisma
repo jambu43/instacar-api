@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modèles pour l'application InstaCar
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  phone     String?
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  cars      Car[]
+  bookings  Booking[]
+  reviews   Review[]
+}
+
+model Car {
+  id          Int      @id @default(autoincrement())
+  brand       String
+  model       String
+  year        Int
+  price       Decimal  @db.Decimal(10, 2)
+  description String?
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  ownerId     Int
+  owner       User      @relation(fields: [ownerId], references: [id])
+  bookings    Booking[]
+  reviews     Review[]
+}
+
+model Booking {
+  id        Int           @id @default(autoincrement())
+  startDate DateTime
+  endDate   DateTime
+  totalPrice Decimal      @db.Decimal(10, 2)
+  status    BookingStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  
+  // Relations
+  userId    Int
+  user      User @relation(fields: [userId], references: [id])
+  carId     Int
+  car       Car  @relation(fields: [carId], references: [id])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  userId    Int
+  user      User @relation(fields: [userId], references: [id])
+  carId     Int
+  car       Car  @relation(fields: [carId], references: [id])
+}
+
+// Enums
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
