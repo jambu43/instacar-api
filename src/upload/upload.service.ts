@@ -9,6 +9,7 @@ export class UploadService {
   private readonly logger = new Logger(UploadService.name);
   private readonly uploadDir = 'uploads';
   private readonly profilesDir = 'profiles';
+  private readonly documentsDir = 'documents';
 
   constructor(private configService: ConfigService) {
     this.ensureDirectories();
@@ -18,9 +19,10 @@ export class UploadService {
     const dirs = [
       this.uploadDir,
       path.join(this.uploadDir, this.profilesDir),
+      path.join(this.uploadDir, this.documentsDir),
     ];
 
-    dirs.forEach(dir => {
+    dirs.forEach((dir) => {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
         this.logger.log(`Dossier créé: ${dir}`);
@@ -64,6 +66,16 @@ export class UploadService {
     return allowedTypes.includes(mimetype);
   }
 
+  private isValidDocumentType(mimetype: string): boolean {
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'application/pdf',
+    ];
+    return allowedTypes.includes(mimetype);
+  }
+
   async deleteProfilePhoto(photoPath: string): Promise<boolean> {
     try {
       if (!photoPath) return true;
@@ -88,5 +100,40 @@ export class UploadService {
     
     const baseUrl = this.configService.get('APP_URL') || 'http://localhost:3000';
     return `${baseUrl}/uploads/${photoPath}`;
+  }
+
+  async uploadDocument(file: Express.Multer.File): Promise<string> {
+    try {
+      // Vérifier le type de fichier
+      if (!this.isValidDocumentType(file.mimetype)) {
+        throw new Error(
+          'Type de fichier non supporté. Utilisez JPG, PNG ou PDF.',
+        );
+      }
+
+      // Vérifier la taille du fichier (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('Fichier trop volumineux. Taille maximum: 10MB.');
+      }
+
+      // Générer un nom de fichier unique
+      const fileExtension = path.extname(file.originalname);
+      const fileName = `${uuidv4()}${fileExtension}`;
+      const filePath = path.join(this.uploadDir, this.documentsDir, fileName);
+
+      // Sauvegarder le fichier
+      fs.writeFileSync(filePath, file.buffer);
+
+      // Retourner l'URL relative du fichier
+      const relativePath = path
+        .join(this.documentsDir, fileName)
+        .replace(/\\/g, '/');
+      
+      this.logger.log(`Document uploadé: ${relativePath}`);
+      return relativePath;
+    } catch (error) {
+      this.logger.error(`Erreur lors de l'upload: ${error.message}`);
+      throw error;
+    }
   }
 } 

@@ -77,6 +77,57 @@ TWILIO_AUTH_TOKEN="your-twilio-auth-token"
 TWILIO_PHONE_NUMBER="your-twilio-phone-number"
 ```
 
+## 🔧 Dépannage
+
+### Erreur 500 - Internal Server Error
+
+Si vous rencontrez une erreur 500 lors de l'enregistrement d'un chauffeur, voici les causes possibles :
+
+#### 1. **Contraintes uniques violées**
+- Numéro de téléphone déjà utilisé
+- Numéro de permis déjà utilisé
+- Plaque d'immatriculation déjà utilisée
+
+**Solution :** Utilisez des données uniques
+```bash
+# Script de diagnostic automatique
+./debug-driver-registration.sh
+
+# Test des contraintes uniques
+./test-driver-constraints.sh
+
+# Reproduction des erreurs
+./reproduce-500-error.sh
+```
+
+#### 2. **Document d'identité manquant**
+- Le fichier référencé n'existe pas dans le dossier `uploads/documents/`
+
+**Solution :** Assurez-vous que le document existe
+```bash
+ls -la uploads/documents/
+```
+
+#### 3. **Problème de base de données**
+```bash
+# Vérifier la connexion
+psql postgresql://root:root@localhost:5432/instacar -c "SELECT 1;"
+
+# Vérifier les contraintes
+psql postgresql://root:root@localhost:5432/instacar -c "\d \"Driver\""
+```
+
+### Scripts de diagnostic
+
+- `./debug-driver-registration.sh` - Diagnostic complet
+- `./test-driver-constraints.sh` - Test des contraintes uniques
+- `./reproduce-500-error.sh` - Reproduction des erreurs
+- `./test-email-config.sh` - Test de configuration email
+
+### Guide complet de dépannage
+
+Consultez le fichier [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) pour un guide détaillé.
+
 ## 📚 Documentation API
 
 ### Swagger UI
@@ -112,9 +163,165 @@ file: [fichier image JPG, PNG, GIF, max 5MB]
 }
 ```
 
+#### 2. Upload de document d'identité
+```http
+POST /upload/document
+```
+
+**Données à envoyer :**
+```
+Content-Type: multipart/form-data
+file: [fichier JPG, PNG, PDF, max 10MB]
+```
+
+**Réponse réussie (201) :**
+```json
+{
+  "success": true,
+  "message": "Document uploadé avec succès",
+  "documentPath": "documents/uuid-filename.pdf",
+  "documentUrl": "http://localhost:3000/uploads/documents/uuid-filename.pdf"
+}
+```
+
 **Erreurs possibles :**
 - `400` : Fichier invalide ou trop volumineux
 - `500` : Erreur serveur
+
+### Inscription des chauffeurs (`/drivers`)
+
+#### 1. Enregistrement d'un véhicule (étape 1)
+```http
+POST /drivers/register-vehicle
+```
+
+**Données à envoyer :**
+```json
+{
+  "city": "Paris",
+  "vehicleType": "PROPRIETAIRE",
+  "brand": "Toyota",
+  "model": "Corolla",
+  "color": "Blanc",
+  "year": 2020,
+  "plateNumber": "AB-123-CD"
+}
+```
+
+**Réponse réussie (201) :**
+```json
+{
+  "success": true,
+  "message": "Véhicule enregistré avec succès",
+  "vehicle": {
+    "id": 1,
+    "city": "Paris",
+    "vehicleType": "PROPRIETAIRE",
+    "brand": "Toyota",
+    "model": "Corolla",
+    "color": "Blanc",
+    "year": 2020,
+    "plateNumber": "AB-123-CD"
+  }
+}
+```
+
+#### 2. Enregistrement d'un chauffeur (étape 2)
+```http
+POST /drivers/register-driver/{vehicleId}
+```
+
+**Données à envoyer :**
+```json
+{
+  "fullName": "Jean Dupont",
+  "phone": "+33123456789",
+  "licenseNumber": "123456789012345",
+  "profilePhoto": "profiles/uuid-photo.jpg",
+  "identityDocument": "documents/uuid-document.pdf"
+}
+```
+
+**Réponse réussie (201) :**
+```json
+{
+  "success": true,
+  "message": "Chauffeur enregistré avec succès",
+  "driver": {
+    "id": 1,
+    "fullName": "Jean Dupont",
+    "phone": "+33123456789",
+    "licenseNumber": "123456789012345",
+    "profilePhoto": "http://localhost:3000/uploads/profiles/uuid-photo.jpg",
+    "identityDocument": "http://localhost:3000/uploads/documents/uuid-document.pdf",
+    "vehicle": {
+      "id": 1,
+      "brand": "Toyota",
+      "model": "Corolla",
+      "color": "Blanc",
+      "year": 2020,
+      "plateNumber": "AB-123-CD",
+      "city": "Paris",
+      "vehicleType": "PROPRIETAIRE"
+    }
+  }
+}
+```
+
+#### 3. Vérifier le statut d'un chauffeur
+```http
+GET /drivers/status/{driverId}
+```
+
+**Réponse réussie (200) :**
+```json
+{
+  "success": true,
+  "isVehicleRegistered": true,
+  "isIdentityComplete": true,
+  "isRegistrationComplete": true,
+  "driver": {
+    "id": 1,
+    "fullName": "Jean Dupont",
+    "phone": "+33123456789",
+    "licenseNumber": "123456789012345",
+    "profilePhoto": "http://localhost:3000/uploads/profiles/uuid-photo.jpg",
+    "identityDocument": "http://localhost:3000/uploads/documents/uuid-document.pdf",
+    "vehicle": { ... }
+  }
+}
+```
+
+#### 4. Récupérer tous les chauffeurs
+```http
+GET /drivers
+```
+
+**Réponse réussie (200) :**
+```json
+{
+  "success": true,
+  "drivers": [
+    {
+      "id": 1,
+      "fullName": "Jean Dupont",
+      "phone": "+33123456789",
+      "licenseNumber": "123456789012345",
+      "profilePhoto": "http://localhost:3000/uploads/profiles/uuid-photo.jpg",
+      "isAvailable": true,
+      "rating": 4.5,
+      "totalRides": 150,
+      "vehicle": {
+        "id": 1,
+        "brand": "Toyota",
+        "model": "Corolla",
+        "color": "Blanc",
+        "plateNumber": "AB-123-CD"
+      }
+    }
+  ]
+}
+```
 
 ### Authentification (`/auth`)
 
@@ -351,6 +558,12 @@ GET /auth/profile-status/{userId}
 
 # Test d'upload de photo uniquement
 ./test-upload-photo.sh
+```
+
+#### Test d'inscription des chauffeurs
+```bash
+# Test complet d'inscription chauffeur avec uploads
+./test-driver-registration.sh
 ```
 
 ### cURL

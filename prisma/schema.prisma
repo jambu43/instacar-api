@@ -47,12 +47,25 @@ model Driver {
   licenseNumber String   @unique
   vehicleId     Int      @unique
   vehicle       Vehicle  @relation(fields: [vehicleId], references: [id])
+  
+  // Informations d'identité du chauffeur
+  fullName      String
+  phone         String   @unique
+  profilePhoto  String?  // URL de la photo de profil
+  identityDocument String? // URL du document d'identité (permis ou carte d'identité)
+  isIdentityComplete Boolean @default(false)
+  
+  // Statut et localisation
   isAvailable   Boolean  @default(true)
   currentLat    Float?
   currentLng    Float?
   lastLocationUpdate DateTime?
   rating        Float    @default(0)
   totalRides    Int      @default(0)
+  
+  // État de l'inscription
+  isRegistrationComplete Boolean @default(false)
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
@@ -70,6 +83,12 @@ model Vehicle {
   plateNumber String   @unique
   capacity    Int      @default(4)
   isActive    Boolean  @default(true)
+  
+  // Informations supplémentaires pour l'inscription chauffeur
+  city        String   // Ville d'enregistrement
+  vehicleType VehicleType // PROPRIETAIRE ou LOCATION
+  isRegistrationComplete Boolean @default(false)
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -147,6 +166,11 @@ enum OtpType {
   EMAIL
   SMS
   WHATSAPP
+}
+
+enum VehicleType {
+  PROPRIETAIRE  // Voiture personnelle
+  LOCATION      // Voiture louée
 }
 
 enum RideStatus {
