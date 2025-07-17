@@ -10,81 +10,151 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Modèles pour l'application InstaCar
+// Modèles pour l'application de taxi InstaCar
 
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
-  name      String?
-  phone     String?
-  role      UserRole @default(USER)
+  name      String
+  phone     String   @unique
+  gender    Gender
+  role      UserRole @default(PASSENGER)
+  isVerified Boolean @default(false)
+  
+  // Informations d'adresse (étape 2)
+  address   String?
+  city      String?
+  commune   String?
+  profilePhoto String?
+  
+  // État de l'inscription
+  isProfileComplete Boolean @default(false)
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   // Relations
-  cars      Car[]
-  bookings  Booking[]
-  reviews   Review[]
+  driver    Driver?
+  rides     Ride[]    @relation("PassengerRides")
+  reviews   Review[]  @relation("PassengerReviews")
+  otpCodes  OtpCode[]
 }
 
-model Car {
+model Driver {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id])
+  licenseNumber String   @unique
+  vehicleId     Int      @unique
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id])
+  isAvailable   Boolean  @default(true)
+  currentLat    Float?
+  currentLng    Float?
+  lastLocationUpdate DateTime?
+  rating        Float    @default(0)
+  totalRides    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  rides         Ride[]   @relation("DriverRides")
+  reviews       Review[] @relation("DriverReviews")
+}
+
+model Vehicle {
   id          Int      @id @default(autoincrement())
   brand       String
   model       String
   year        Int
-  price       Decimal  @db.Decimal(10, 2)
-  description String?
-  imageUrl    String?
-  isAvailable Boolean  @default(true)
+  color       String
+  plateNumber String   @unique
+  capacity    Int      @default(4)
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   // Relations
-  ownerId     Int
-  owner       User      @relation(fields: [ownerId], references: [id])
-  bookings    Booking[]
-  reviews     Review[]
+  driver      Driver?
 }
 
-model Booking {
-  id        Int           @id @default(autoincrement())
-  startDate DateTime
-  endDate   DateTime
-  totalPrice Decimal      @db.Decimal(10, 2)
-  status    BookingStatus @default(PENDING)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+model Ride {
+  id              Int        @id @default(autoincrement())
+  passengerId     Int
+  passenger       User       @relation("PassengerRides", fields: [passengerId], references: [id])
+  driverId        Int?
+  driver          Driver?    @relation("DriverRides", fields: [driverId], references: [id])
+  pickupLat       Float
+  pickupLng       Float
+  pickupAddress   String
+  dropoffLat      Float
+  dropoffLng      Float
+  dropoffAddress  String
+  distance        Float?     // en km
+  duration        Int?       // en minutes
+  price           Decimal    @db.Decimal(10, 2)
+  status          RideStatus @default(REQUESTED)
+  requestedAt     DateTime   @default(now())
+  acceptedAt      DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
   
   // Relations
-  userId    Int
-  user      User @relation(fields: [userId], references: [id])
-  carId     Int
-  car       Car  @relation(fields: [carId], references: [id])
+  review         Review?
 }
 
 model Review {
   id        Int      @id @default(autoincrement())
-  rating    Int
+  rideId    Int      @unique
+  ride      Ride     @relation(fields: [rideId], references: [id])
+  passengerId Int
+  passenger User     @relation("PassengerReviews", fields: [passengerId], references: [id])
+  driverId  Int
+  driver    Driver   @relation("DriverReviews", fields: [driverId], references: [id])
+  rating    Int      // 1-5 étoiles
   comment   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // Relations
+}
+
+model OtpCode {
+  id        Int      @id @default(autoincrement())
   userId    Int
-  user      User @relation(fields: [userId], references: [id])
-  carId     Int
-  car       Car  @relation(fields: [carId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  code      String   // Code OTP (5 chiffres)
+  type      OtpType  // EMAIL, SMS, WHATSAPP
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 // Enums
 enum UserRole {
-  USER
+  PASSENGER
+  DRIVER
   ADMIN
 }
 
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum OtpType {
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+enum RideStatus {
+  REQUESTED    // Course demandée
+  SEARCHING    // Recherche de chauffeur
+  ACCEPTED     // Chauffeur accepté
+  ARRIVING     // Chauffeur en route
+  IN_PROGRESS  // Course en cours
+  COMPLETED    // Course terminée
+  CANCELLED    // Course annulée
 }
