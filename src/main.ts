@@ -8,6 +8,7 @@ import { join } from 'path';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { AppKeyGlobalGuard } from './common/guards/app-key-global.guard';
 import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
+import { MetricsService } from './common/services/metrics.service';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -31,7 +32,7 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   // Configuration de l'interceptor de métriques global
-  const metricsService = app.get('MetricsService');
+  const metricsService = app.get(MetricsService);
   app.useGlobalInterceptors(new MetricsInterceptor(metricsService));
 
   // Configuration CORS
