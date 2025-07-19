@@ -33,14 +33,23 @@ export class OtpService {
       const emailPass = this.configService.get('EMAIL_PASS');
       const emailHost = this.configService.get('EMAIL_HOST');
       const emailPort = this.configService.get('EMAIL_PORT');
-      
-      this.logger.log(`Configuration email: ${emailUser}@${emailHost}:${emailPort}`);
-      
-      if (!emailUser || !emailPass || emailUser === 'your-email@gmail.com' || emailPass === 'your-app-password') {
-        this.logger.warn('Configuration email manquante ou par défaut. Les emails seront simulés.');
+
+      this.logger.log(
+        `Configuration email: ${emailUser}@${emailHost}:${emailPort}`,
+      );
+
+      if (
+        !emailUser ||
+        !emailPass ||
+        emailUser === 'your-email@gmail.com' ||
+        emailPass === 'your-app-password'
+      ) {
+        this.logger.warn(
+          'Configuration email manquante ou par défaut. Les emails seront simulés.',
+        );
         this.logger.warn('Pour configurer Gmail:');
-        this.logger.warn('1. Activez l\'authentification à 2 facteurs');
-        this.logger.warn('2. Créez un mot de passe d\'application');
+        this.logger.warn("1. Activez l'authentification à 2 facteurs");
+        this.logger.warn("2. Créez un mot de passe d'application");
         this.logger.warn('3. Mettez à jour EMAIL_USER et EMAIL_PASS dans .env');
         return;
       }
@@ -63,16 +72,20 @@ export class OtpService {
         if (error) {
           this.logger.error(`Erreur de configuration email: ${error.message}`);
           this.logger.error('Vérifiez:');
-          this.logger.error('- L\'authentification à 2 facteurs est activée');
-          this.logger.error('- Le mot de passe d\'application est correct');
-          this.logger.error('- Les paramètres EMAIL_USER et EMAIL_PASS dans .env');
+          this.logger.error("- L'authentification à 2 facteurs est activée");
+          this.logger.error("- Le mot de passe d'application est correct");
+          this.logger.error(
+            '- Les paramètres EMAIL_USER et EMAIL_PASS dans .env',
+          );
           this.logger.warn('Les emails seront simulés en mode développement.');
         } else {
           this.logger.log('✅ Configuration email validée avec succès');
         }
       });
     } catch (error) {
-      this.logger.error(`Erreur lors de l'initialisation email: ${error.message}`);
+      this.logger.error(
+        `Erreur lors de l'initialisation email: ${error.message}`,
+      );
       this.logger.warn('Les emails seront simulés en mode développement.');
     }
   }
@@ -81,15 +94,19 @@ export class OtpService {
     try {
       const accountSid = this.configService.get('TWILIO_ACCOUNT_SID');
       const authToken = this.configService.get('TWILIO_AUTH_TOKEN');
-      
+
       if (accountSid && authToken && accountSid.startsWith('AC')) {
         this.twilioClient = twilio(accountSid, authToken);
         this.logger.log('Twilio initialisé avec succès');
       } else {
-        this.logger.warn('Twilio non configuré ou configuration invalide. SMS/WhatsApp seront simulés.');
+        this.logger.warn(
+          'Twilio non configuré ou configuration invalide. SMS/WhatsApp seront simulés.',
+        );
       }
     } catch (error) {
-      this.logger.warn('Erreur lors de l\'initialisation de Twilio. SMS/WhatsApp seront simulés.');
+      this.logger.warn(
+        "Erreur lors de l'initialisation de Twilio. SMS/WhatsApp seront simulés.",
+      );
     }
   }
 
@@ -97,7 +114,12 @@ export class OtpService {
     return Math.floor(10000 + Math.random() * 90000).toString();
   }
 
-  async sendOtp(userId: number, email: string, phone: string, type: OtpType): Promise<boolean> {
+  async sendOtp(
+    userId: number,
+    email: string,
+    phone: string,
+    type: OtpType,
+  ): Promise<boolean> {
     const code = this.generateOtpCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
@@ -194,7 +216,11 @@ export class OtpService {
     }
   }
 
-  async verifyOtp(userId: number, code: string, type: OtpType): Promise<boolean> {
+  async verifyOtp(
+    userId: number,
+    code: string,
+    type: OtpType,
+  ): Promise<boolean> {
     try {
       const otpRecord = await this.prisma.otpCode.findFirst({
         where: {
@@ -230,4 +256,4 @@ export class OtpService {
       return false;
     }
   }
-} 
+}

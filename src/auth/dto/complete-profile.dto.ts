@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CompleteProfileDto {
   @ApiProperty({
-    description: 'Adresse complète de l\'utilisateur',
+    description: "Adresse complète de l'utilisateur",
     example: '123 Rue de la Paix',
   })
   @IsNotEmpty()
@@ -11,7 +11,7 @@ export class CompleteProfileDto {
   address: string;
 
   @ApiProperty({
-    description: 'Ville de l\'utilisateur',
+    description: "Ville de l'utilisateur",
     example: 'Paris',
   })
   @IsNotEmpty()
@@ -19,7 +19,7 @@ export class CompleteProfileDto {
   city: string;
 
   @ApiProperty({
-    description: 'Commune/Quartier de l\'utilisateur',
+    description: "Commune/Quartier de l'utilisateur",
     example: 'Le Marais',
   })
   @IsNotEmpty()
@@ -34,4 +34,4 @@ export class CompleteProfileDto {
   @IsOptional()
   @IsString()
   profilePhoto?: string;
-} 
+}

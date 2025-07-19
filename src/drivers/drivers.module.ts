@@ -10,4 +10,4 @@ import { UploadModule } from '../upload/upload.module';
   providers: [DriversService],
   exports: [DriversService],
 })
-export class DriversModule {} 
+export class DriversModule {}

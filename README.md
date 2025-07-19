@@ -323,6 +323,96 @@ GET /drivers
 }
 ```
 
+#### 5. Mettre à jour le statut de disponibilité d'un chauffeur
+```http
+PUT /drivers/availability/{driverId}
+```
+
+**Données à envoyer :**
+```json
+{
+  "isAvailable": true,
+  "currentLat": 48.8566,
+  "currentLng": 2.3522
+}
+```
+
+**Réponse réussie (200) :**
+```json
+{
+  "success": true,
+  "message": "Chauffeur mis en ligne avec succès",
+  "driver": {
+    "id": 1,
+    "fullName": "Jean Dupont",
+    "isAvailable": true,
+    "currentLat": 48.8566,
+    "currentLng": 2.3522,
+    "lastLocationUpdate": "2025-07-18T20:44:34.470Z",
+    "vehicle": {
+      "id": 1,
+      "brand": "Toyota",
+      "model": "Corolla",
+      "color": "Blanc",
+      "plateNumber": "AB-123-CD"
+    }
+  }
+}
+```
+
+#### 6. Rechercher des chauffeurs disponibles
+```http
+POST /drivers/search
+```
+
+**Données à envoyer :**
+```json
+{
+  "lat": 48.8566,
+  "lng": 2.3522,
+  "radius": 5,
+  "vehicleType": "PROPRIETAIRE",
+  "limit": 10
+}
+```
+
+**Réponse réussie (200) :**
+```json
+{
+  "success": true,
+  "message": "2 chauffeur(s) disponible(s) trouvé(s)",
+  "searchLocation": {
+    "lat": 48.8566,
+    "lng": 2.3522,
+    "radius": 5
+  },
+  "drivers": [
+    {
+      "id": 1,
+      "fullName": "Jean Dupont",
+      "phone": "+33123456789",
+      "profilePhoto": "http://localhost:3000/uploads/profiles/uuid-photo.jpg",
+      "rating": 4.5,
+      "totalRides": 150,
+      "distance": 1.2,
+      "currentLocation": {
+        "lat": 48.8566,
+        "lng": 2.3522,
+        "lastUpdate": "2025-07-18T20:44:34.470Z"
+      },
+      "vehicle": {
+        "id": 1,
+        "brand": "Toyota",
+        "model": "Corolla",
+        "color": "Blanc",
+        "plateNumber": "AB-123-CD",
+        "vehicleType": "PROPRIETAIRE"
+      }
+    }
+  ]
+}
+```
+
 ### Authentification (`/auth`)
 
 #### 1. Inscription utilisateur
@@ -564,6 +654,12 @@ GET /auth/profile-status/{userId}
 ```bash
 # Test complet d'inscription chauffeur avec uploads
 ./test-driver-registration.sh
+
+# Test de disponibilité des chauffeurs
+./test-driver-availability.sh
+
+# Démonstration du workflow complet chauffeur
+./demo-driver-workflow.sh
 ```
 
 ### cURL

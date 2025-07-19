@@ -8,7 +8,13 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiConsumes,
+  ApiBody,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { UploadService } from './upload.service';
 
 @ApiTags('upload')
@@ -56,7 +62,12 @@ export class UploadController {
       },
       fileFilter: (req, file, cb) => {
         if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-          return cb(new BadRequestException('Seuls les fichiers JPG, PNG et GIF sont autorisés'), false);
+          return cb(
+            new BadRequestException(
+              'Seuls les fichiers JPG, PNG et GIF sont autorisés',
+            ),
+            false,
+          );
         }
         cb(null, true);
       },
@@ -92,7 +103,7 @@ export class UploadController {
   @ApiOperation({ summary: "Upload d'un document d'identité" })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Document d\'identité (permis, carte d\'identité)',
+    description: "Document d'identité (permis, carte d'identité)",
     schema: {
       type: 'object',
       properties: {
@@ -164,4 +175,4 @@ export class UploadController {
       );
     }
   }
-} 
+}

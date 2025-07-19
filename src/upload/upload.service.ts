@@ -34,7 +34,9 @@ export class UploadService {
     try {
       // Vérifier le type de fichier
       if (!this.isValidImageType(file.mimetype)) {
-        throw new Error('Type de fichier non supporté. Utilisez JPG, PNG ou GIF.');
+        throw new Error(
+          'Type de fichier non supporté. Utilisez JPG, PNG ou GIF.',
+        );
       }
 
       // Vérifier la taille du fichier (max 5MB)
@@ -51,8 +53,10 @@ export class UploadService {
       fs.writeFileSync(filePath, file.buffer);
 
       // Retourner l'URL relative du fichier
-      const relativePath = path.join(this.profilesDir, fileName).replace(/\\/g, '/');
-      
+      const relativePath = path
+        .join(this.profilesDir, fileName)
+        .replace(/\\/g, '/');
+
       this.logger.log(`Photo de profil uploadée: ${relativePath}`);
       return relativePath;
     } catch (error) {
@@ -81,13 +85,13 @@ export class UploadService {
       if (!photoPath) return true;
 
       const fullPath = path.join(this.uploadDir, photoPath);
-      
+
       if (fs.existsSync(fullPath)) {
         fs.unlinkSync(fullPath);
         this.logger.log(`Photo supprimée: ${photoPath}`);
         return true;
       }
-      
+
       return false;
     } catch (error) {
       this.logger.error(`Erreur lors de la suppression: ${error.message}`);
@@ -97,8 +101,9 @@ export class UploadService {
 
   getPhotoUrl(photoPath: string): string | null {
     if (!photoPath) return null;
-    
-    const baseUrl = this.configService.get('APP_URL') || 'http://localhost:3000';
+
+    const baseUrl =
+      this.configService.get('APP_URL') || 'http://localhost:3000';
     return `${baseUrl}/uploads/${photoPath}`;
   }
 
@@ -128,7 +133,7 @@ export class UploadService {
       const relativePath = path
         .join(this.documentsDir, fileName)
         .replace(/\\/g, '/');
-      
+
       this.logger.log(`Document uploadé: ${relativePath}`);
       return relativePath;
     } catch (error) {
@@ -136,4 +141,4 @@ export class UploadService {
       throw error;
     }
   }
-} 
+}

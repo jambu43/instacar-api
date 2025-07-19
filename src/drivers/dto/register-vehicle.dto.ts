@@ -65,4 +65,4 @@ export class RegisterVehicleDto {
   @IsString()
   @IsNotEmpty()
   plateNumber: string;
-} 
+}

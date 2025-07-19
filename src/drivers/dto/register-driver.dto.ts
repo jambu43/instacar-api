@@ -36,10 +36,11 @@ export class RegisterDriverDto {
   profilePhoto?: string;
 
   @ApiProperty({
-    description: 'Chemin vers le document d\'identité (permis ou carte d\'identité)',
+    description:
+      "Chemin vers le document d'identité (permis ou carte d'identité)",
     example: 'documents/uuid-document.pdf',
   })
   @IsString()
   @IsNotEmpty()
   identityDocument: string;
-} 
+}

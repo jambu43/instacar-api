@@ -20,6 +20,7 @@ model User {
   gender    Gender
   role      UserRole @default(PASSENGER)
   isVerified Boolean @default(false)
+  emailVerified Boolean @default(false) // Email vérifié via OTP
   
   // Informations d'adresse (étape 2)
   address   String?
@@ -30,6 +31,9 @@ model User {
   // État de l'inscription
   isProfileComplete Boolean @default(false)
   
+  // Tokens d'authentification
+  refreshToken String?
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -38,6 +42,9 @@ model User {
   rides     Ride[]    @relation("PassengerRides")
   reviews   Review[]  @relation("PassengerReviews")
   otpCodes  OtpCode[]
+  notifications Notification[]
+  pushTokens PushToken[]
+  notificationPreferences NotificationPreferences?
 }
 
 model Driver {
@@ -72,6 +79,9 @@ model Driver {
   // Relations
   rides         Ride[]   @relation("DriverRides")
   reviews       Review[] @relation("DriverReviews")
+  notifications Notification[]
+  location      Location?
+  locationHistory LocationHistory[]
 }
 
 model Vehicle {
@@ -123,6 +133,7 @@ model Ride {
   
   // Relations
   review         Review?
+  notifications  Notification[]
 }
 
 model Review {
@@ -148,6 +159,93 @@ model OtpCode {
   expiresAt DateTime
   isUsed    Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  user        User             @relation(fields: [userId], references: [id])
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?            // Données supplémentaires (rideId, driverId, etc.)
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  
+  // Relations optionnelles
+  rideId      Int?
+  ride        Ride?            @relation(fields: [rideId], references: [id])
+  driverId    Int?
+  driver      Driver?          @relation(fields: [driverId], references: [id])
+}
+
+model Location {
+  id          Int      @id @default(autoincrement())
+  driverId    Int      @unique
+  driver      Driver   @relation(fields: [driverId], references: [id])
+  latitude    Float
+  longitude   Float
+  accuracy    Float?   // Précision en mètres
+  speed       Float?   // Vitesse en m/s
+  heading     Float?   // Direction en degrés (0-360)
+  altitude    Float?   // Altitude en mètres
+  address     String?  // Adresse formatée
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([driverId])
+}
+
+model LocationHistory {
+  id          Int      @id @default(autoincrement())
+  driverId    Int
+  driver      Driver   @relation(fields: [driverId], references: [id])
+  latitude    Float
+  longitude   Float
+  accuracy    Float?   // Précision en mètres
+  speed       Float?   // Vitesse en m/s
+  heading     Float?   // Direction en degrés (0-360)
+  altitude    Float?   // Altitude en mètres
+  address     String?  // Adresse formatée
+  timestamp   DateTime @default(now())
+  
+  @@index([driverId, timestamp])
+}
+
+model PushToken {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  token       String   @unique // Token FCM
+  deviceId    String?  // ID unique de l'appareil
+  platform    Platform // ANDROID, IOS, WEB
+  isActive    Boolean  @default(true)
+  lastUsed    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId, platform])
+}
+
+model NotificationPreferences {
+  id                    Int      @id @default(autoincrement())
+  userId                Int      @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  rideNotifications     Boolean  @default(true)
+  promotionalNotifications Boolean @default(true)
+  systemNotifications   Boolean  @default(true)
+  emailNotifications    Boolean  @default(true)
+  smsNotifications      Boolean  @default(false)
+  pushNotifications     Boolean  @default(true)
+  enablePushNotifications Boolean @default(true)
+  enableRideNotifications Boolean @default(true)
+  enablePromotionalNotifications Boolean @default(true)
+  quietHoursStart       String?  // Format HH:MM
+  quietHoursEnd         String?  // Format HH:MM
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 // Enums
@@ -181,4 +279,24 @@ enum RideStatus {
   IN_PROGRESS  // Course en cours
   COMPLETED    // Course terminée
   CANCELLED    // Course annulée
+}
+
+enum NotificationType {
+  RIDE_REQUESTED     // Nouvelle demande de course
+  RIDE_ACCEPTED      // Course acceptée par un chauffeur
+  RIDE_STARTED       // Course commencée
+  RIDE_COMPLETED     // Course terminée
+  RIDE_CANCELLED     // Course annulée
+  DRIVER_ARRIVING    // Chauffeur en route
+  DRIVER_ARRIVED     // Chauffeur arrivé
+  PAYMENT_SUCCESS    // Paiement réussi
+  PAYMENT_FAILED     // Paiement échoué
+  SYSTEM_MESSAGE     // Message système
+  PROMOTION          // Promotion ou offre spéciale
+}
+
+enum Platform {
+  ANDROID
+  IOS
+  WEB
 }

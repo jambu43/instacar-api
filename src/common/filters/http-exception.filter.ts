@@ -27,7 +27,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let message = 'Internal server error';
     if (exception instanceof HttpException) {
       const exceptionResponse = exception.getResponse();
-      if (typeof exceptionResponse === 'object' && 'message' in exceptionResponse) {
+      if (
+        typeof exceptionResponse === 'object' &&
+        'message' in exceptionResponse
+      ) {
         message = Array.isArray(exceptionResponse.message)
           ? exceptionResponse.message[0]
           : exceptionResponse.message;
@@ -65,9 +68,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     // En mode développement, ajouter plus de détails
     if (process.env.NODE_ENV !== 'production') {
-      errorResponse['error'] = exception instanceof Error ? exception.stack : 'Unknown error';
+      errorResponse['error'] =
+        exception instanceof Error ? exception.stack : 'Unknown error';
     }
 
     response.status(status).json(errorResponse);
   }
-} 
+}
