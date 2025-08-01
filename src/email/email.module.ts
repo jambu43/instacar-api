@@ -12,12 +12,21 @@ import { EmailService } from './email.service';
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: false, // true pour 465, false pour les autres ports
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
+          user: process.env.SMTP_USER || '',
+          pass: process.env.SMTP_PASS || '',
         },
+        // Configuration pour éviter les erreurs d'authentification
+        ignoreTLS: false,
+        requireTLS: true,
+        // Configuration du pool pour améliorer la fiabilité
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        rateLimit: 14,
+        rateDelta: 1000,
       },
       defaults: {
-        from: `"InstaCar" <${process.env.SMTP_USER}>`,
+        from: `"InstaCar" <${process.env.SMTP_USER || 'noreply@instacar.com'}>`,
       },
       template: {
         dir: join(__dirname, 'templates'),
